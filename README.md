@@ -1,8 +1,9 @@
 # github-setup
 
-Settings for a GitHub account that are not tied to one machine. It gives
-every repository of the account the same merge and branch settings, and
-reports the repositories that differ.
+Settings for a GitHub account. It gives every repository of the account the
+same merge and branch settings and reports the repositories that differ,
+and it registers a Mac's git signing key on the account so that its commits
+show as verified.
 
 ## Getting started
 
@@ -49,13 +50,36 @@ for each. Name repositories to limit a run to them:
 
 Archived repositories and forks are skipped.
 
+## Register the signing key
+
+git signs every commit with the SSH key that the git config names in
+`user.signingkey` (tiavelum/mac-config sets it). GitHub shows those commits
+as verified only once the same key is registered on the account as a
+signing key, a registration separate from the one for pushing. Run this once
+per Mac, after the git config is in place:
+
+```bash
+~/vc/github-setup/register-signing-key.sh
+```
+
+It needs the `admin:ssh_signing_key` scope, which a plain `gh auth login`
+does not grant. When the scope is missing, the script adds it with
+`gh auth refresh` and you confirm in the browser. Run without a terminal,
+it prints that command instead and stops. A key that is already registered
+is left alone:
+
+```
+    signing key already registered on GitHub: /Users/andi/.ssh/id_ed25519.pub
+```
+
 ## Content and structure
 
 | File | Holds |
 |---|---|
 | `repo-settings.sh` | The check, and with `--apply` the change |
 | `repo-settings.json` | The values every repository gets: squash merging only, with the pull request's title and description as the commit, and merged branches deleted |
-| `.editorconfig`, `.shellcheckrc` | Formatting (`shfmt` reads `.editorconfig`) and linting for the script |
+| `register-signing-key.sh` | The registration of the Mac's signing key on the account |
+| `.editorconfig`, `.shellcheckrc` | Formatting (`shfmt` reads `.editorconfig`) and linting for the scripts |
 
 ## License
 
