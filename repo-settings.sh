@@ -8,7 +8,8 @@
 #
 # The values are repo-settings.json next to this script. Archived
 # repositories and forks are printed as skipped and left unchanged. Exits
-# 1 when a repository still differs, so the check can gate.
+# 1 when a repository still differs or could not be read, so the check
+# can gate.
 
 set -uo pipefail
 
@@ -21,7 +22,7 @@ for arg in "$@"; do
   case "$arg" in
   --apply) APPLY=1 ;;
   -h | --help)
-    sed -n '2,12p' "$0"
+    sed -n '2,13p' "$0"
     exit 0
     ;;
   -*)
@@ -202,6 +203,8 @@ apply_settings() {
 
 differing=0
 unreadable=0
+checked=0
+skipped=0
 for repo in "${repos[@]}"; do
   if ! repo_json="$(gh api "repos/$repo" 2>&1)" ||
     ! reason="$(skip_reason "$repo_json" 2>&1)"; then
@@ -211,6 +214,7 @@ for repo in "${repos[@]}"; do
   fi
   if [ -n "$reason" ]; then
     echo "skipped $repo ($reason)"
+    skipped=$((skipped + 1))
     continue
   fi
   if ! diff_lines="$(differences "$repo" "$repo_json" 2>&1)"; then
@@ -220,12 +224,14 @@ for repo in "${repos[@]}"; do
   fi
   if [ -z "$diff_lines" ]; then
     echo "  ok  $repo"
+    checked=$((checked + 1))
     continue
   fi
   if [ "$APPLY" -eq 1 ]; then
     if err="$(apply_settings "$repo" "$repo_json" 2>&1)" &&
       after="$(differences "$repo" 2>/dev/null)" && [ -z "$after" ]; then
       echo "  set $repo"
+      checked=$((checked + 1))
       printf '%s\n' "$diff_lines" | sed 's/^/        /'
     else
       echo "!! $repo: setting the values failed${err:+ -- ${err##*$'\n'}}" >&2
@@ -248,4 +254,8 @@ if [ "$differing" -gt 0 ]; then
   exit 1
 fi
 [ "$unreadable" -gt 0 ] && exit 1
+if [ "$checked" -eq 0 ]; then
+  echo "==> no repository checked; $skipped skipped"
+  exit 0
+fi
 echo "==> every repository checked has the settings of repo-settings.json"

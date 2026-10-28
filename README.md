@@ -54,7 +54,9 @@ for each. Name repositories to limit a run to them:
 
 Archived repositories and forks are skipped, whether the run lists the
 account's repositories or names them: each prints `skipped`, counts neither
-as matching nor as differing, and `--apply` changes nothing on it. A
+as matching nor as differing, and `--apply` changes nothing on it. A run
+in which every repository is skipped ends with `==> no repository
+checked; 1 skipped`, giving the number skipped, and exits 0. A
 repository without commits gets the rulesets with the run after its first
 commit, since its default branch does not exist before.
 
