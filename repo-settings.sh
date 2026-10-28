@@ -6,9 +6,9 @@
 #   ./repo-settings.sh --apply         set the values where they differ
 #   ./repo-settings.sh [--apply] owner/name ...   only these repositories
 #
-# The values are repo-settings.json next to this script. Archived
-# repositories and forks are skipped. Exits 1 when a repository still
-# differs, so the check can gate.
+# The values are repo-settings.json next to this script. Without named
+# repositories, archived repositories and forks are left out. Exits 1
+# when a repository still differs, so the check can gate.
 
 set -uo pipefail
 
@@ -174,7 +174,7 @@ differences() {
   repo_json="$(gh api "repos/$1")" || return 1
   merge_differences "$repo_json" || return 1
   security_differences "$repo_json" || return 1
-  rulesets_step "$1" "$repo_json"
+  rulesets_step "$1" "$repo_json" || echo "rulesets: could not be read"
 }
 
 apply_settings() {
@@ -188,7 +188,7 @@ apply_settings() {
     jq -c '{security_and_analysis: .}' <<<"$security" |
       gh api -X PATCH "repos/$1" --input - >/dev/null || return 1
   fi
-  rulesets_step "$1" "$repo_json" apply
+  rulesets_step "$1" "$repo_json" apply || true
 }
 
 differing=0

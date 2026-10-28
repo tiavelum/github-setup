@@ -50,9 +50,10 @@ for each. Name repositories to limit a run to them:
 ~/vc/github-setup/repo-settings.sh --apply tiavelum/github-setup
 ```
 
-Archived repositories and forks are skipped. A repository without commits
-gets the rulesets with the run after its first commit, since its default
-branch does not exist before.
+Archived repositories and forks are left out of the list when no
+repository is named; a named one is checked like any other. A repository
+without commits gets the rulesets with the run after its first commit,
+since its default branch does not exist before.
 
 ## What the values set
 
@@ -72,7 +73,8 @@ one listed.
 ## Known limits
 
 - Rulesets need a public repository or a paid plan. On a private repository
-  of a free account the run cannot set them and reports the repository.
+  of a free account the run still checks and sets the merge settings, but
+  cannot set the rulesets and reports the repository.
 - The rulesets require no status checks: a ruleset names each check it
   requires, and the checks differ between repositories.
 - With force pushes refused, the default branch cannot be renamed, and with
