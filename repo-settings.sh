@@ -6,9 +6,9 @@
 #   ./repo-settings.sh --apply         set the values where they differ
 #   ./repo-settings.sh [--apply] owner/name ...   only these repositories
 #
-# The values are repo-settings.json next to this script. Without named
-# repositories, archived repositories and forks are left out. Exits 1
-# when a repository still differs, so the check can gate.
+# The values are repo-settings.json next to this script. Archived
+# repositories and forks are printed as skipped and left unchanged. Exits
+# 1 when a repository still differs, so the check can gate.
 
 set -uo pipefail
 
@@ -60,7 +60,7 @@ if [ "${#repos[@]}" -eq 0 ]; then
     exit 2
   }
   while IFS= read -r r; do repos+=("$r"); done < <(
-    gh repo list "$owner" --limit 1000 --no-archived --source \
+    gh repo list "$owner" --limit 1000 \
       --json nameWithOwner --jq '.[].nameWithOwner'
   )
 fi
@@ -129,12 +129,14 @@ branch_exists() {
   return 2
 }
 
-# The rulesets are compared once the default branch exists: before the
-# first commit there is no branch for them to protect and nothing to tag.
-# $1: the repository; $2: its JSON. With $3 = apply, each ruleset that
-# differs is set instead of printed.
+# The rulesets are compared on a public repository only, since a private
+# repository gets them only on a paid plan, and once the default branch
+# exists: before the first commit there is no branch for them to protect
+# and nothing to tag. $1: the repository; $2: its JSON. With $3 = apply,
+# each ruleset that differs is set instead of printed.
 rulesets_step() {
   local repo="$1" branch status list i want id current lines
+  [ "$(jq -r '.visibility' <<<"$2")" = public ] || return 0
   branch="$(jq -r '.default_branch' <<<"$2")"
   branch_exists "$repo" "$branch"
   status=$?
@@ -169,17 +171,24 @@ rulesets_step() {
   done
 }
 
+# Prints why repository JSON $1 is skipped, and nothing when it is not.
+skip_reason() {
+  jq -r 'if .archived then "archived" elif .fork then "fork"
+    else empty end' <<<"$1"
+}
+
+# $1: the repository; $2: its JSON, read anew when left out.
 differences() {
-  local repo_json
-  repo_json="$(gh api "repos/$1")" || return 1
+  local repo_json="${2:-}"
+  [ -n "$repo_json" ] || repo_json="$(gh api "repos/$1")" || return 1
   merge_differences "$repo_json" || return 1
   security_differences "$repo_json" || return 1
   rulesets_step "$1" "$repo_json" || echo "rulesets: could not be read"
 }
 
+# $1: the repository; $2: its JSON.
 apply_settings() {
-  local repo_json
-  repo_json="$(gh api "repos/$1")" || return 1
+  local repo_json="$2"
   if [ -n "$(merge_differences "$repo_json")" ]; then
     gh api -X PATCH "repos/$1" --input - <<<"$repository" >/dev/null ||
       return 1
@@ -194,7 +203,17 @@ apply_settings() {
 differing=0
 unreadable=0
 for repo in "${repos[@]}"; do
-  if ! diff_lines="$(differences "$repo" 2>&1)"; then
+  if ! repo_json="$(gh api "repos/$repo" 2>&1)" ||
+    ! reason="$(skip_reason "$repo_json" 2>&1)"; then
+    echo "!! $repo: could not read its settings -- ${repo_json##*$'\n'}" >&2
+    unreadable=$((unreadable + 1))
+    continue
+  fi
+  if [ -n "$reason" ]; then
+    echo "skipped $repo ($reason)"
+    continue
+  fi
+  if ! diff_lines="$(differences "$repo" "$repo_json" 2>&1)"; then
     echo "!! $repo: could not read its settings -- ${diff_lines##*$'\n'}" >&2
     unreadable=$((unreadable + 1))
     continue
@@ -204,7 +223,7 @@ for repo in "${repos[@]}"; do
     continue
   fi
   if [ "$APPLY" -eq 1 ]; then
-    if err="$(apply_settings "$repo" 2>&1)" &&
+    if err="$(apply_settings "$repo" "$repo_json" 2>&1)" &&
       after="$(differences "$repo" 2>/dev/null)" && [ -z "$after" ]; then
       echo "  set $repo"
       printf '%s\n' "$diff_lines" | sed 's/^/        /'
@@ -229,4 +248,4 @@ if [ "$differing" -gt 0 ]; then
   exit 1
 fi
 [ "$unreadable" -gt 0 ] && exit 1
-echo "==> every repository has the settings of repo-settings.json"
+echo "==> every repository checked has the settings of repo-settings.json"

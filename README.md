@@ -22,7 +22,8 @@ git clone git@github.com:tiavelum/github-setup.git ~/vc/github-setup
 ```
 
 A repository whose settings match prints `ok`; one that differs prints
-`diff` and each field that differs, and the run exits 1:
+`diff` and each field that differs, and the run exits 1. An archived
+repository or a fork prints `skipped` and the reason:
 
 ```
   ok  tiavelum/engineering-standards
@@ -31,6 +32,7 @@ diff  tiavelum/mac-bootstrap
         delete_branch_on_merge false -> true
         ruleset default-branch: missing
         ruleset tags: missing
+skipped tiavelum/cli (fork)
 ==> 1 repository/ies differ; run with --apply to set them
 ```
 
@@ -50,10 +52,11 @@ for each. Name repositories to limit a run to them:
 ~/vc/github-setup/repo-settings.sh --apply tiavelum/github-setup
 ```
 
-Archived repositories and forks are left out of the list when no
-repository is named; a named one is checked like any other. A repository
-without commits gets the rulesets with the run after its first commit,
-since its default branch does not exist before.
+Archived repositories and forks are skipped, whether the run lists the
+account's repositories or names them: each prints `skipped`, counts neither
+as matching nor as differing, and `--apply` changes nothing on it. A
+repository without commits gets the rulesets with the run after its first
+commit, since its default branch does not exist before.
 
 ## What the values set
 
@@ -64,7 +67,8 @@ since its default branch does not exist before.
 | `rulesets`, `default-branch` | The default branch changes only through a pull request, which needs no approval, and refuses force pushes |
 | `rulesets`, `tags` | A pushed tag can be neither moved nor deleted |
 
-The rulesets have no bypass, so they hold for the account's owner too. A
+The rulesets are checked and set on public repositories only (see Known
+limits). They have no bypass, so they hold for the account's owner too. A
 parameter of a rule that `repo-settings.json` leaves out is left to GitHub
 and not compared; a rule that the repository's ruleset has beyond those
 listed shows as a difference, and `--apply` replaces the ruleset with the
@@ -72,9 +76,9 @@ one listed.
 
 ## Known limits
 
-- Rulesets need a public repository or a paid plan. On a private repository
-  of a free account the run still checks and sets the merge settings, but
-  cannot set the rulesets and reports the repository.
+- Rulesets reach public repositories only. GitHub offers them on a private
+  repository only on a paid plan, and the script does not set them there
+  even on one, so a private repository gets the merge settings alone.
 - The rulesets require no status checks: a ruleset names each check it
   requires, and the checks differ between repositories.
 - With force pushes refused, the default branch cannot be renamed, and with
