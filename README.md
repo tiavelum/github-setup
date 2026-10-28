@@ -1,14 +1,14 @@
 # github-setup
 
 Settings for a GitHub account. It gives every repository of the account the
-same merge and branch settings and reports the repositories that differ,
-and it registers a Mac's git signing key on the account so that its commits
-show as verified.
+same merge settings, branch and tag rulesets and secret scanning, and reports
+the repositories that differ, and it registers a Mac's git signing key on the
+account so that its commits show as verified.
 
 ## Getting started
 
-Requires bash 3.2 or later and the GitHub CLI `gh` (tested with 2.89), logged in
-to the account:
+Requires bash 3.2 or later, `jq` (tested with 1.7) and the GitHub CLI `gh`
+(tested with 2.89), logged in to the account:
 
 ```bash
 gh auth login
@@ -29,13 +29,15 @@ A repository whose settings match prints `ok`; one that differs prints
 diff  tiavelum/mac-bootstrap
         allow_rebase_merge true -> false
         delete_branch_on_merge false -> true
+        ruleset default-branch: missing
+        ruleset tags: missing
 ==> 1 repository/ies differ; run with --apply to set them
 ```
 
 ## Set the values
 
-Run this after creating a repository, and after changing
-`repo-settings.json`:
+Run this after creating a repository, again after its first commit, and
+after changing `repo-settings.json`:
 
 ```bash
 ~/vc/github-setup/repo-settings.sh --apply
@@ -48,7 +50,35 @@ for each. Name repositories to limit a run to them:
 ~/vc/github-setup/repo-settings.sh --apply tiavelum/github-setup
 ```
 
-Archived repositories and forks are skipped.
+Archived repositories and forks are skipped. A repository without commits
+gets the rulesets with the run after its first commit, since its default
+branch does not exist before.
+
+## What the values set
+
+| Key in `repo-settings.json` | Sets |
+|---|---|
+| `repository` | Squash merging only, with the pull request's title and description as the commit, and merged branches deleted |
+| `security_and_analysis` | Secret scanning and push protection, on public repositories only: a repository of a personal account can enable them nowhere else |
+| `rulesets`, `default-branch` | The default branch changes only through a pull request, which needs no approval, and refuses force pushes |
+| `rulesets`, `tags` | A pushed tag can be neither moved nor deleted |
+
+The rulesets have no bypass, so they hold for the account's owner too. A
+parameter of a rule that `repo-settings.json` leaves out is left to GitHub
+and not compared; a rule that the repository's ruleset has beyond those
+listed shows as a difference, and `--apply` replaces the ruleset with the
+one listed.
+
+## Known limits
+
+- Rulesets need a public repository or a paid plan. On a private repository
+  of a free account the run cannot set them and reports the repository.
+- The rulesets require no status checks: a ruleset names each check it
+  requires, and the checks differ between repositories.
+- With force pushes refused, the default branch cannot be renamed, and with
+  tags protected, a tag cannot be deleted. To do either, first set the
+  ruleset's enforcement to disabled in the repository's settings; the check
+  reports the ruleset until `--apply` restores it.
 
 ## Register the signing key
 
@@ -77,7 +107,7 @@ is left alone:
 | File | Holds |
 |---|---|
 | `repo-settings.sh` | The check, and with `--apply` the change |
-| `repo-settings.json` | The values every repository gets: squash merging only, with the pull request's title and description as the commit, and merged branches deleted |
+| `repo-settings.json` | The values every repository gets: merge settings, secret scanning and the rulesets, as "What the values set" describes them |
 | `register-signing-key.sh` | The registration of the Mac's signing key on the account |
 | `.editorconfig`, `.shellcheckrc` | Formatting (`shfmt` reads `.editorconfig`) and linting for the scripts |
 
