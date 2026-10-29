@@ -36,6 +36,17 @@ skipped tiavelum/cli (fork)
 ==> 1 repository/ies differ; run with --apply to set them
 ```
 
+| Line | Means |
+|---|---|
+| `ok` | The repository has every value of `repo-settings.json`. |
+| `diff` | The repository differs; each indented line below names one difference. |
+| `set` | With `--apply`: the differences listed below it were set. |
+| `skipped` | An archived repository or a fork, not checked. |
+| `<field> <now> -> <wanted>` | The repository has `<now>`; the file asks for `<wanted>`. |
+| `ruleset <name>: missing` | The repository lacks the ruleset; any other line on a ruleset names the rule or parameter that differs. |
+| `!! <repository>: could not read its settings` | `gh` could not read the repository, for example without access; the run exits 1. |
+| `==>` | The summary of the run. |
+
 ## Set the values
 
 Run this after creating a repository, again after its first commit, and
