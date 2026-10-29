@@ -26,8 +26,8 @@ A repository whose settings match prints `ok`; one that differs prints
 repository or a fork prints `skipped` and the reason:
 
 ```
-  ok  tiavelum/engineering-standards
-diff  tiavelum/mac-bootstrap
+ok      tiavelum/engineering-standards
+diff    tiavelum/mac-bootstrap
         allow_rebase_merge true -> false
         delete_branch_on_merge false -> true
         ruleset default-branch: missing
