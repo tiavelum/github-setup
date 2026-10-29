@@ -1,9 +1,9 @@
 # github-setup
 
 Settings for a GitHub account. It gives every repository of the account the
-same merge settings, branch and tag rulesets and secret scanning, and reports
-the repositories that differ, and it registers a Mac's git signing key on the
-account so that its commits show as verified.
+same merge settings, branch and tag rulesets, secret scanning and issue
+labels, and reports the repositories that differ, and it registers a Mac's
+git signing key on the account so that its commits show as verified.
 
 ## Getting started
 
@@ -32,6 +32,8 @@ diff  tiavelum/mac-bootstrap
         delete_branch_on_merge false -> true
         ruleset default-branch: missing
         ruleset tags: missing
+        label tiavelum-acts: color 000000 -> 1D76DB
+        label answer-acknowledged: missing
 skipped tiavelum/cli (fork)
 ==> 1 repository/ies differ; run with --apply to set them
 ```
@@ -46,7 +48,8 @@ after changing `repo-settings.json`:
 ```
 
 It changes the settings of every repository that differs and prints `set`
-for each. Name repositories to limit a run to them:
+for each. A label that is missing is created, and one that differs is
+updated. Name repositories to limit a run to them:
 
 ```bash
 ~/vc/github-setup/repo-settings.sh --apply tiavelum/github-setup
@@ -68,6 +71,7 @@ commit, since its default branch does not exist before.
 | `security_and_analysis` | Secret scanning and push protection, on public repositories only: a repository of a personal account can enable them nowhere else |
 | `rulesets`, `default-branch` | The default branch changes only through a pull request, which needs no approval, and refuses force pushes |
 | `rulesets`, `tags` | A pushed tag can be neither moved nor deleted |
+| `labels` | The issue labels `tiavelum-decides`, `tiavelum-acts` and `answer-acknowledged`, each with its colour and description, on public and private repositories alike |
 
 The rulesets are checked and set on public repositories only (see Known
 limits). They have no bypass, so they hold for the account's owner too. A
@@ -75,6 +79,13 @@ parameter of a rule that `repo-settings.json` leaves out is left to GitHub
 and not compared; a rule that the repository's ruleset has beyond those
 listed shows as a difference, and `--apply` replaces the ruleset with the
 one listed.
+
+A label is found by its name. GitHub treats two names that differ only in
+case as one label, so a label whose name differs from the listed one only
+in case counts as that label: it shows as a `name` difference, and
+`--apply` renames it to the listed name. A label's colour, a hexadecimal
+code, is compared regardless of case. Labels that `repo-settings.json`
+does not list are left alone and not reported.
 
 ## Known limits
 
@@ -115,7 +126,7 @@ is left alone:
 | File | Holds |
 |---|---|
 | `repo-settings.sh` | The check, and with `--apply` the change |
-| `repo-settings.json` | The values every repository gets: merge settings, secret scanning and the rulesets, as "What the values set" describes them |
+| `repo-settings.json` | The values every repository gets: merge settings, secret scanning, the rulesets and the labels, as "What the values set" describes them |
 | `register-signing-key.sh` | The registration of the Mac's signing key on the account |
 | `.editorconfig`, `.shellcheckrc` | Formatting (`shfmt` reads `.editorconfig`) and linting for the scripts |
 

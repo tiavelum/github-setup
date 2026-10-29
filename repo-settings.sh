@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # repo-settings.sh -- give every repository of a GitHub account the same
-# merge settings, branch and tag rulesets, and secret scanning.
+# merge settings, branch and tag rulesets, secret scanning and issue labels.
 #
 #   ./repo-settings.sh                 report every repository that differs
 #   ./repo-settings.sh --apply         set the values where they differ
@@ -49,11 +49,14 @@ gh auth status >/dev/null 2>&1 || {
 }
 if ! repository="$(jq -ce '.repository' "$SETTINGS")" ||
   ! security="$(jq -ce '.security_and_analysis' "$SETTINGS")" ||
-  ! rulesets="$(jq -ce '.rulesets' "$SETTINGS")"; then
-  echo "!! $SETTINGS needs repository, security_and_analysis and rulesets" >&2
+  ! rulesets="$(jq -ce '.rulesets' "$SETTINGS")" ||
+  ! labels="$(jq -ce '.labels' "$SETTINGS")"; then
+  echo "!! $SETTINGS needs repository, security_and_analysis, rulesets" \
+    "and labels" >&2
   exit 2
 fi
 ruleset_count="$(jq 'length' <<<"$rulesets")"
+label_count="$(jq 'length' <<<"$labels")"
 
 if [ "${#repos[@]}" -eq 0 ]; then
   owner="$(gh api user --jq .login)" || {
@@ -172,6 +175,63 @@ rulesets_step() {
   done
 }
 
+# A jq definition: label_named($n) is the label of the input list named $n,
+# else the one whose name differs from $n only in case, since GitHub
+# treats such names as one label; empty when there is neither.
+# shellcheck disable=SC2016 # $n is a jq variable, expanded by jq
+LABEL_NAMED='def label_named($n): first(.[] | select(.name == $n))
+  // first(.[] | select((.name | ascii_downcase) == ($n | ascii_downcase)));'
+
+# $1: a label of repo-settings.json; $2: the repository's labels as
+# GET repos/<owner>/<name>/labels returns them, as one array. The colour
+# is compared regardless of case, as a hexadecimal code.
+label_differences() {
+  jq -r --argjson want "$1" "$LABEL_NAMED"'
+    "label \($want.name):" as $p
+    | (label_named($want.name) // null) as $cur
+    | if $cur == null then "\($p) missing"
+      else
+        (select($cur.name != $want.name)
+          | "\($p) name \($cur.name) -> \($want.name)"),
+        (select(($cur.color | ascii_downcase) != ($want.color | ascii_downcase))
+          | "\($p) color \($cur.color) -> \($want.color)"),
+        (($cur.description // "") as $d | select($d != $want.description)
+          | "\($p) description \($d | tojson) -> \($want.description | tojson)")
+      end' <<<"$2"
+}
+
+# The labels of repo-settings.json are compared on every repository;
+# other labels are left alone. $1: the repository. With $2 = apply, a
+# missing label is created and one that differs is updated, renamed to
+# the listed name where its name differs only in case.
+labels_step() {
+  local repo="$1" list i want lines current path
+  list="$(gh api --paginate "repos/$repo/labels?per_page=100" --jq '.[]' |
+    jq -cs '.')" || return 1
+  i=0
+  while [ "$i" -lt "$label_count" ]; do
+    want="$(jq -c --argjson i "$i" '.[$i]' <<<"$labels")"
+    lines="$(label_differences "$want" "$list")" || return 1
+    if [ -n "$lines" ] && [ "${2:-}" != apply ]; then
+      printf '%s\n' "$lines"
+    elif [ -n "$lines" ]; then
+      current="$(jq -r --argjson w "$want" "$LABEL_NAMED"'
+        label_named($w.name) | .name' <<<"$list")" || return 1
+      if [ -z "$current" ]; then
+        gh api -X POST "repos/$repo/labels" --input - <<<"$want" \
+          >/dev/null || return 1
+      else
+        path="repos/$repo/labels/$(jq -rn --arg n "$current" '$n | @uri')"
+        jq -c --arg cur "$current" '{color, description}
+          + if .name != $cur then {new_name: .name} else {} end' \
+          <<<"$want" | gh api -X PATCH "$path" --input - >/dev/null ||
+          return 1
+      fi
+    fi
+    i=$((i + 1))
+  done
+}
+
 # Prints why repository JSON $1 is skipped, and nothing when it is not.
 skip_reason() {
   jq -r 'if .archived then "archived" elif .fork then "fork"
@@ -185,6 +245,7 @@ differences() {
   merge_differences "$repo_json" || return 1
   security_differences "$repo_json" || return 1
   rulesets_step "$1" "$repo_json" || echo "rulesets: could not be read"
+  labels_step "$1" || echo "labels: could not be read"
 }
 
 # $1: the repository; $2: its JSON.
@@ -199,6 +260,7 @@ apply_settings() {
       gh api -X PATCH "repos/$1" --input - >/dev/null || return 1
   fi
   rulesets_step "$1" "$repo_json" apply || true
+  labels_step "$1" apply || true
 }
 
 differing=0
