@@ -1,8 +1,51 @@
 {
-  "allow_squash_merge": true,
-  "squash_merge_commit_title": "PR_TITLE",
-  "squash_merge_commit_message": "PR_BODY",
-  "allow_merge_commit": false,
-  "allow_rebase_merge": false,
-  "delete_branch_on_merge": true
+  "repository": {
+    "allow_squash_merge": true,
+    "squash_merge_commit_title": "PR_TITLE",
+    "squash_merge_commit_message": "PR_BODY",
+    "allow_merge_commit": false,
+    "allow_rebase_merge": false,
+    "delete_branch_on_merge": true
+  },
+  "security_and_analysis": {
+    "secret_scanning": { "status": "enabled" },
+    "secret_scanning_push_protection": { "status": "enabled" }
+  },
+  "rulesets": [
+    {
+      "name": "default-branch",
+      "target": "branch",
+      "enforcement": "active",
+      "bypass_actors": [],
+      "conditions": {
+        "ref_name": { "include": ["~DEFAULT_BRANCH"], "exclude": [] }
+      },
+      "rules": [
+        {
+          "type": "pull_request",
+          "parameters": {
+            "required_approving_review_count": 0,
+            "dismiss_stale_reviews_on_push": false,
+            "require_code_owner_review": false,
+            "require_last_push_approval": false,
+            "required_review_thread_resolution": false
+          }
+        },
+        { "type": "non_fast_forward" }
+      ]
+    },
+    {
+      "name": "tags",
+      "target": "tag",
+      "enforcement": "active",
+      "bypass_actors": [],
+      "conditions": {
+        "ref_name": { "include": ["~ALL"], "exclude": [] }
+      },
+      "rules": [
+        { "type": "update" },
+        { "type": "deletion" }
+      ]
+    }
+  ]
 }

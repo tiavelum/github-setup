@@ -1,14 +1,14 @@
 # github-setup
 
 Settings for a GitHub account. It gives every repository of the account the
-same merge and branch settings and reports the repositories that differ,
-and it registers a Mac's git signing key on the account so that its commits
-show as verified.
+same merge settings, branch and tag rulesets and secret scanning, and reports
+the repositories that differ, and it registers a Mac's git signing key on the
+account so that its commits show as verified.
 
 ## Getting started
 
-Requires bash 3.2 or later and the GitHub CLI `gh` (tested with 2.89), logged in
-to the account:
+Requires bash 3.2 or later, `jq` (tested with 1.7) and the GitHub CLI `gh`
+(tested with 2.89), logged in to the account:
 
 ```bash
 gh auth login
@@ -22,20 +22,40 @@ git clone git@github.com:tiavelum/github-setup.git ~/vc/github-setup
 ```
 
 A repository whose settings match prints `ok`; one that differs prints
-`diff` and each field that differs, and the run exits 1:
+`diff` and each field that differs, and the run exits 1. An archived
+repository or a fork prints `skipped` and the reason:
 
 ```
-  ok  tiavelum/engineering-standards
-diff  tiavelum/mac-bootstrap
-        allow_rebase_merge true -> false
-        delete_branch_on_merge false -> true
+ok      tiavelum/engineering-standards
+diff    tiavelum/mac-bootstrap
+          allow_rebase_merge true -> false
+          delete_branch_on_merge false -> true
+          ruleset default-branch: missing
+          ruleset tags: missing
+skipped tiavelum/cli (fork)
 ==> 1 repository/ies differ; run with --apply to set them
 ```
 
+| Line | Means |
+|---|---|
+| `ok` | The repository has every value of `repo-settings.json` that is compared for it; rulesets and secret scanning are compared on public repositories only (see Known limits). |
+| `diff` | The repository differs; each indented line below names one difference. |
+| `set` | With `--apply`: the differences listed below it were set. |
+| `skipped` | An archived repository or a fork, not checked. |
+| `<field> <now> -> <wanted>` | The repository has `<now>`; the file asks for `<wanted>`. |
+| `ruleset <name>: missing` | The repository lacks the ruleset. |
+| `ruleset <name>: <part> <now> -> <wanted>` | The ruleset differs in `<part>`: `target`, `enforcement`, `refs`, `bypass_actors`, or `<rule>.<parameter>`. |
+| `ruleset <name>: rule <rule> missing` | The ruleset lacks a rule the file lists. |
+| `ruleset <name>: rule <rule> is not in repo-settings.json` | The ruleset has a rule the file does not list; `--apply` removes it. |
+| `rulesets: could not be read` | `gh` could not read the rulesets of the repository, so it counts as differing and the run exits 1; the `gh` error is the line above it. With `--apply` the run prints the `!!` line below instead of `set`. |
+| `!! <repository>: could not read its settings` | `gh` could not read the repository, for example without access; the run exits 1. |
+| `!! <repository>: setting the values failed` | With `--apply`: a value could not be set, or the repository still differs afterwards; the run exits 1. |
+| `==>` | The summary of the run. |
+
 ## Set the values
 
-Run this after creating a repository, and after changing
-`repo-settings.json`:
+Run this after creating a repository, again after its first commit, and
+after changing `repo-settings.json`:
 
 ```bash
 ~/vc/github-setup/repo-settings.sh --apply
@@ -48,7 +68,41 @@ for each. Name repositories to limit a run to them:
 ~/vc/github-setup/repo-settings.sh --apply tiavelum/github-setup
 ```
 
-Archived repositories and forks are skipped.
+Archived repositories and forks are skipped, whether the run lists the
+account's repositories or names them: each prints `skipped`, counts neither
+as matching nor as differing, and `--apply` changes nothing on it. A run
+in which every repository is skipped ends with `==> no repository
+checked; 1 skipped`, giving the number skipped, and exits 0. A
+repository without commits gets the rulesets with the run after its first
+commit, since its default branch does not exist before.
+
+## What the values set
+
+| Key in `repo-settings.json` | Sets |
+|---|---|
+| `repository` | Squash merging only, with the pull request's title and description as the commit, and merged branches deleted |
+| `security_and_analysis` | Secret scanning and push protection, on public repositories only: a repository of a personal account can enable them nowhere else |
+| `rulesets`, `default-branch` | The default branch changes only through a pull request, which needs no approval, and refuses force pushes |
+| `rulesets`, `tags` | A pushed tag can be neither moved nor deleted |
+
+The rulesets are checked and set on public repositories only (see Known
+limits). They have no bypass, so they hold for the account's owner too. A
+parameter of a rule that `repo-settings.json` leaves out is left to GitHub
+and not compared; a rule that the repository's ruleset has beyond those
+listed shows as a difference, and `--apply` replaces the ruleset with the
+one listed.
+
+## Known limits
+
+- Rulesets reach public repositories only. GitHub offers them on a private
+  repository only on a paid plan, and the script does not set them there
+  even on one, so a private repository gets the merge settings alone.
+- The rulesets require no status checks: a ruleset names each check it
+  requires, and the checks differ between repositories.
+- With force pushes refused, the default branch cannot be renamed, and with
+  tags protected, a tag cannot be deleted. To do either, first set the
+  ruleset's enforcement to disabled in the repository's settings; the check
+  reports the ruleset until `--apply` restores it.
 
 ## Register the signing key
 
@@ -77,7 +131,7 @@ is left alone:
 | File | Holds |
 |---|---|
 | `repo-settings.sh` | The check, and with `--apply` the change |
-| `repo-settings.json` | The values every repository gets: squash merging only, with the pull request's title and description as the commit, and merged branches deleted |
+| `repo-settings.json` | The values every repository gets: merge settings, secret scanning and the rulesets, as "What the values set" describes them |
 | `register-signing-key.sh` | The registration of the Mac's signing key on the account |
 | `.editorconfig`, `.shellcheckrc` | Formatting (`shfmt` reads `.editorconfig`) and linting for the scripts |
 
