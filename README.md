@@ -110,7 +110,8 @@ does not list are left alone and not reported.
 
 - Rulesets reach public repositories only. GitHub offers them on a private
   repository only on a paid plan, and the script does not set them there
-  even on one, so a private repository gets the merge settings and the labels alone.
+  even on one, so a private repository gets the merge settings and the
+  labels alone.
 - The rulesets require no status checks: a ruleset names each check it
   requires, and the checks differ between repositories.
 - With force pushes refused, the default branch cannot be renamed, and with
