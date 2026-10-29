@@ -32,7 +32,7 @@ diff  tiavelum/mac-bootstrap
         delete_branch_on_merge false -> true
         ruleset default-branch: missing
         ruleset tags: missing
-        label tiavelum-acts: color 000000 -> 1D76DB
+        label tiavelum-acts: color 000000 -> c2b416
         label answer-acknowledged: missing
 skipped tiavelum/cli (fork)
 ==> 1 repository/ies differ; run with --apply to set them
@@ -91,7 +91,7 @@ does not list are left alone and not reported.
 
 - Rulesets reach public repositories only. GitHub offers them on a private
   repository only on a paid plan, and the script does not set them there
-  even on one, so a private repository gets the merge settings alone.
+  even on one, so a private repository gets the merge settings and the labels alone.
 - The rulesets require no status checks: a ruleset names each check it
   requires, and the checks differ between repositories.
 - With force pushes refused, the default branch cannot be renamed, and with

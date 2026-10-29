@@ -51,17 +51,17 @@
   "labels": [
     {
       "name": "tiavelum-decides",
-      "color": "D93F0B",
+      "color": "a0ed21",
       "description": "A question only tiavelum can answer; tiavelum answers in a comment"
     },
     {
       "name": "tiavelum-acts",
-      "color": "1D76DB",
+      "color": "c2b416",
       "description": "A step only tiavelum can take; tiavelum comments when it is done"
     },
     {
       "name": "answer-acknowledged",
-      "color": "0E8A16",
+      "color": "0e8a16",
       "description": "Claude has read tiavelum's answer or report; closing the issue says it is carried out"
     }
   ]
