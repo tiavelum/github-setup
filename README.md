@@ -38,13 +38,18 @@ skipped tiavelum/cli (fork)
 
 | Line | Means |
 |---|---|
-| `ok` | The repository has every value of `repo-settings.json`. |
+| `ok` | The repository has every value of `repo-settings.json` that is compared for it; rulesets and secret scanning are compared on public repositories only (see Known limits). |
 | `diff` | The repository differs; each indented line below names one difference. |
 | `set` | With `--apply`: the differences listed below it were set. |
 | `skipped` | An archived repository or a fork, not checked. |
 | `<field> <now> -> <wanted>` | The repository has `<now>`; the file asks for `<wanted>`. |
-| `ruleset <name>: missing` | The repository lacks the ruleset; any other line on a ruleset names the rule or parameter that differs. |
+| `ruleset <name>: missing` | The repository lacks the ruleset. |
+| `ruleset <name>: <part> <now> -> <wanted>` | The ruleset differs in `<part>`: `target`, `enforcement`, `refs`, `bypass_actors`, or `<rule>.<parameter>`. |
+| `ruleset <name>: rule <rule> missing` | The ruleset lacks a rule the file lists. |
+| `ruleset <name>: rule <rule> is not in repo-settings.json` | The ruleset has a rule the file does not list; `--apply` removes it. |
+| `rulesets: could not be read` | `gh` could not read the rulesets of the repository, so it counts as differing and the run exits 1; the `gh` error is the line above it. With `--apply` the run prints the `!!` line below instead of `set`. |
 | `!! <repository>: could not read its settings` | `gh` could not read the repository, for example without access; the run exits 1. |
+| `!! <repository>: setting the values failed` | With `--apply`: a value could not be set, or the repository still differs afterwards; the run exits 1. |
 | `==>` | The summary of the run. |
 
 ## Set the values
