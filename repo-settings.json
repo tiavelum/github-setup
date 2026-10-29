@@ -51,12 +51,12 @@
   "labels": [
     {
       "name": "tiavelum-decides",
-      "color": "fb8c00",
+      "color": "e65100",
       "description": "A question only tiavelum can answer; tiavelum answers in a comment"
     },
     {
       "name": "tiavelum-acts",
-      "color": "e65100",
+      "color": "d32f2f",
       "description": "A step only tiavelum can take; tiavelum comments when it is done"
     },
     {

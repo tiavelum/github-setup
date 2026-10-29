@@ -32,7 +32,7 @@ diff    tiavelum/mac-bootstrap
           delete_branch_on_merge false -> true
           ruleset default-branch: missing
           ruleset tags: missing
-          label tiavelum-acts: color 000000 -> e65100
+          label tiavelum-acts: color 000000 -> d32f2f
           label answer-acknowledged: missing
 skipped tiavelum/cli (fork)
 ==> 1 repository/ies differ; run with --apply to set them
