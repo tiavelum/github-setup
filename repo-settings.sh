@@ -275,7 +275,7 @@ for repo in "${repos[@]}"; do
     continue
   fi
   if [ -n "$reason" ]; then
-    echo "skipped $repo ($reason)"
+    printf '%-7s %s\n' skipped "$repo ($reason)"
     skipped=$((skipped + 1))
     continue
   fi
@@ -285,23 +285,23 @@ for repo in "${repos[@]}"; do
     continue
   fi
   if [ -z "$diff_lines" ]; then
-    echo "  ok  $repo"
+    printf '%-7s %s\n' ok "$repo"
     checked=$((checked + 1))
     continue
   fi
   if [ "$APPLY" -eq 1 ]; then
     if err="$(apply_settings "$repo" "$repo_json" 2>&1)" &&
       after="$(differences "$repo" 2>/dev/null)" && [ -z "$after" ]; then
-      echo "  set $repo"
+      printf '%-7s %s\n' set "$repo"
       checked=$((checked + 1))
-      printf '%s\n' "$diff_lines" | sed 's/^/        /'
+      printf '%s\n' "$diff_lines" | sed 's/^/          /'
     else
       echo "!! $repo: setting the values failed${err:+ -- ${err##*$'\n'}}" >&2
       differing=$((differing + 1))
     fi
   else
-    echo "diff  $repo"
-    printf '%s\n' "$diff_lines" | sed 's/^/        /'
+    printf '%-7s %s\n' diff "$repo"
+    printf '%s\n' "$diff_lines" | sed 's/^/          /'
     differing=$((differing + 1))
   fi
 done
