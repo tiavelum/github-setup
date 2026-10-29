@@ -28,10 +28,10 @@ repository or a fork prints `skipped` and the reason:
 ```
 ok      tiavelum/engineering-standards
 diff    tiavelum/mac-bootstrap
-        allow_rebase_merge true -> false
-        delete_branch_on_merge false -> true
-        ruleset default-branch: missing
-        ruleset tags: missing
+          allow_rebase_merge true -> false
+          delete_branch_on_merge false -> true
+          ruleset default-branch: missing
+          ruleset tags: missing
 skipped tiavelum/cli (fork)
 ==> 1 repository/ies differ; run with --apply to set them
 ```

@@ -232,14 +232,14 @@ for repo in "${repos[@]}"; do
       after="$(differences "$repo" 2>/dev/null)" && [ -z "$after" ]; then
       printf '%-7s %s\n' set "$repo"
       checked=$((checked + 1))
-      printf '%s\n' "$diff_lines" | sed 's/^/        /'
+      printf '%s\n' "$diff_lines" | sed 's/^/          /'
     else
       echo "!! $repo: setting the values failed${err:+ -- ${err##*$'\n'}}" >&2
       differing=$((differing + 1))
     fi
   else
     printf '%-7s %s\n' diff "$repo"
-    printf '%s\n' "$diff_lines" | sed 's/^/        /'
+    printf '%s\n' "$diff_lines" | sed 's/^/          /'
     differing=$((differing + 1))
   fi
 done
