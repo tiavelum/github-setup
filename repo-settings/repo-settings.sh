@@ -267,7 +267,8 @@ differing=0
 unreadable=0
 checked=0
 skipped=0
-for repo in "${repos[@]}"; do
+# Before bash 4.4, an empty "${repos[@]}" is unbound under set -u.
+for repo in ${repos[@]+"${repos[@]}"}; do
   if ! repo_json="$(gh api "repos/$repo" 2>&1)" ||
     ! reason="$(skip_reason "$repo_json" 2>&1)"; then
     echo "!! $repo: could not read its settings -- ${repo_json##*$'\n'}" >&2
