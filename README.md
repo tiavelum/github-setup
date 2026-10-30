@@ -21,8 +21,8 @@ git clone git@github.com:tiavelum/github-setup.git ~/vc/github-setup
 ~/vc/github-setup/repo-settings.sh
 ```
 
-The repositories that `repo-settings.sh` checks are those of the account
-`gh` is logged in to that a run without repository names lists, other than
+The repositories that `repo-settings.sh` checks are those that a run without
+repository names lists from the account `gh` is logged in to, other than
 archived repositories and forks. A repository among them whose settings
 `gh` cannot read is still checked: the run prints no `ok` for it, so it
 fails TL-29 of tiavelum/engineering-standards.
