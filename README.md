@@ -14,12 +14,16 @@ Requires bash 3.2 or later, `jq` (tested with 1.7) and the GitHub CLI `gh`
 gh auth login
 ```
 
-Check every repository of the account:
+Check the repositories of the account:
 
 ```bash
 git clone git@github.com:tiavelum/github-setup.git ~/vc/github-setup
 ~/vc/github-setup/repo-settings.sh
 ```
+
+The repositories that `repo-settings.sh` checks are those of the account
+`gh` is logged in to for which a run without `--apply` and without
+repository names prints `ok` or `diff`.
 
 A repository whose settings match prints `ok`; one that differs prints
 `diff` and each field that differs, and the run exits 1. An archived
@@ -51,8 +55,8 @@ skipped tiavelum/cli (fork)
 | `ruleset <name>: rule <rule> is not in repo-settings.json` | The ruleset has a rule the file does not list; `--apply` removes it. |
 | `label <name>: missing` | The repository lacks the label. |
 | `label <name>: <field> <now> -> <wanted>` | The label differs in `name`, `color` or `description`. |
-| `labels: could not be read` | `gh` could not read the labels of the repository, so it counts as differing and the run exits 1. |
-| `rulesets: could not be read` | `gh` could not read the rulesets of the repository, so it counts as differing and the run exits 1; the `gh` error is the line above it. With `--apply` the run prints the `!!` line below instead of `set`. |
+| `labels: could not be read` | `gh` could not read the labels of the repository, so a run without `--apply` prints `diff` for the repository and exits 1. |
+| `rulesets: could not be read` | `gh` could not read the rulesets of the repository, so a run without `--apply` prints `diff` for the repository and exits 1; the `gh` error is the line above this one. With `--apply` the run prints the `!!` line below instead of `set`. |
 | `!! <repository>: could not read its settings` | `gh` could not read the repository, for example without access; the run exits 1. |
 | `!! <repository>: setting the values failed` | With `--apply`: a value could not be set, or the repository still differs afterwards; the run exits 1. |
 | `==>` | The summary of the run. |
@@ -78,7 +82,10 @@ Archived repositories and forks are skipped, whether the run lists the
 account's repositories or names them: each prints `skipped`, counts neither
 as matching nor as differing, and `--apply` changes nothing on it. A run
 in which every repository is skipped ends with `==> no repository
-checked; 1 skipped`, giving the number skipped, and exits 0. A
+checked; 1 skipped`, giving the number skipped, and exits 0. A named
+repository that a run without names does not list, such as one of another
+owner, is not one of the repositories that `repo-settings.sh` checks, even
+where the summary line of the run that names it calls it `checked`. A
 repository without commits gets the rulesets with the run after its first
 commit, since its default branch does not exist before.
 
@@ -92,7 +99,7 @@ commit, since its default branch does not exist before.
 | `rulesets`, `tags` | A pushed tag can be neither moved nor deleted |
 | `labels` | The issue labels `tiavelum-decides`, `tiavelum-acts` and `answer-acknowledged`, each with its colour and description, on public and private repositories alike |
 
-The rulesets are checked and set on public repositories only (see Known
+The rulesets are compared and set on public repositories only (see Known
 limits). They have no bypass, so they hold for the account's owner too. A
 parameter of a rule that `repo-settings.json` leaves out is left to GitHub
 and not compared; a rule that the repository's ruleset has beyond those
