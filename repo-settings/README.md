@@ -3,8 +3,8 @@
 This directory holds `repo-settings.sh` and the values in
 `repo-settings.json`; this README is for whoever runs the script or changes
 either file, and gives what the [root README](../README.md) leaves out: the
-output and exit status of a run that fails, and the rules the two files
-follow.
+exit status of a run, the output of a run that fails, and the rules the
+two files follow.
 
 ## Exit status
 

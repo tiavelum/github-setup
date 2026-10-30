@@ -17,9 +17,10 @@ script finds and compares the key, and what it prints when it stops.
   input is a terminal, it prints
   `    gh lacks the admin:ssh_signing_key scope; adding it (confirm in the browser)`
   and runs `gh auth refresh -h github.com -s admin:ssh_signing_key`.
-- It registers the key with `gh ssh-key add --type signing`, titled with
-  the output of `scutil --get ComputerName`, or of `hostname` where that
-  fails, followed by ` signing`. It then reads the account's signing keys
+- It registers the key with `gh ssh-key add --type signing`, under the
+  title the [root README](../README.md#register-the-signing-key) gives; the
+  computer name in it is the output of `scutil --get ComputerName`, or of
+  `hostname` where that fails. It then reads the account's signing keys
   again and prints that the key is registered only when it finds the key
   among them.
 
@@ -33,7 +34,7 @@ registering the key:
 | `!! no user.signingkey in the git config — run ~/vc/mac-config/install.sh first` | The git config names no signing key |
 | `!! <key file> missing — run gh auth login and let it generate an SSH key` | The file that `user.signingkey` names does not exist |
 | `!! gh is not authenticated — run: gh auth login -s admin:ssh_signing_key` | `gh auth status -h github.com` fails |
-| `!! gh lacks the admin:ssh_signing_key scope — run: gh auth refresh -h github.com -s admin:ssh_signing_key` | The scope is missing and standard input is not a terminal, as when another script runs this one, so the browser cannot be confirmed |
+| `!! gh lacks the admin:ssh_signing_key scope — run: gh auth refresh -h github.com -s admin:ssh_signing_key` | The scope is missing and standard input is not a terminal, so the script does not start the confirmation in the browser. Standard input is not a terminal where the caller redirects it, such as from a file, a pipe or `/dev/null`, or starts the script where there is no terminal at all; a script started from a terminal passes the terminal on to this one unless it redirects input |
 | `!! gh ssh-key add reported no error, but the key is not in the account's signing keys` | `gh ssh-key add` succeeded, but reading the account's signing keys afterwards fails or does not show the key |
 
 When `gh` cannot read the account's signing keys, the script prints the
