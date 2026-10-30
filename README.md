@@ -18,18 +18,16 @@ Check the repositories of the account:
 
 ```bash
 git clone git@github.com:tiavelum/github-setup.git ~/vc/github-setup
-~/vc/github-setup/repo-settings.sh
+~/vc/github-setup/repo-settings/repo-settings.sh
 ```
 
 The repositories that `repo-settings.sh` checks are those that a run without
 repository names lists from the account `gh` is logged in to, other than
-archived repositories and forks. A repository among them whose settings
-`gh` cannot read is still checked: the run prints no `ok` for it, so it
-fails TL-29 of tiavelum/engineering-standards.
+archived repositories and forks.
 
 A repository whose settings match prints `ok`; one that differs prints
-`diff` and each field that differs, and the run exits 1. An archived
-repository or a fork prints `skipped` and the reason:
+`diff` and each field that differs. An archived repository or a fork
+prints `skipped` and the reason:
 
 ```
 ok      tiavelum/engineering-standards
@@ -57,11 +55,11 @@ skipped tiavelum/cli (fork)
 | `ruleset <name>: rule <rule> is not in repo-settings.json` | The ruleset has a rule the file does not list; `--apply` removes it. |
 | `label <name>: missing` | The repository lacks the label. |
 | `label <name>: <field> <now> -> <wanted>` | The label differs in `name`, `color` or `description`. |
-| `labels: could not be read` | `gh` could not read the labels of the repository, so a run without `--apply` prints `diff` for the repository and exits 1; the `gh` error is the line above this one. With `--apply` the run prints `!! <repository>: setting the values failed` instead of `set`. |
-| `rulesets: could not be read` | `gh` could not read the rulesets of the repository, so a run without `--apply` prints `diff` for the repository and exits 1; the `gh` error is the line above this one. With `--apply` the run prints `!! <repository>: setting the values failed` instead of `set`. |
-| `!! <repository>: could not read its settings` | `gh` could not read the repository, for example without access; the run exits 1. |
-| `!! <repository>: setting the values failed` | With `--apply`: a value could not be set, or the repository still differs afterwards; the run exits 1. |
-| `==>` | The summary of the run. It counts a repository that `gh` could not read in the line `==> <number> repository/ies could not be checked`, though that repository is one of the repositories checked. |
+| `==>` | The summary of the run. When every repository checked matches, it reads `==> every repository checked has the settings of repo-settings.json`. |
+
+The exit status of a run, and the lines it prints when it cannot read or
+set a repository or cannot start, are in the
+[README of `repo-settings/`](repo-settings/README.md).
 
 ## Set the values
 
@@ -69,7 +67,7 @@ Run this after creating a repository, again after its first commit, and
 after changing `repo-settings.json`:
 
 ```bash
-~/vc/github-setup/repo-settings.sh --apply
+~/vc/github-setup/repo-settings/repo-settings.sh --apply
 ```
 
 It changes the settings of every repository that differs and prints `set`
@@ -77,21 +75,28 @@ for each. A label that is missing is created, and one that differs is
 updated. Name repositories to limit a run to them:
 
 ```bash
-~/vc/github-setup/repo-settings.sh --apply tiavelum/github-setup
+~/vc/github-setup/repo-settings/repo-settings.sh --apply tiavelum/github-setup
 ```
 
 Archived repositories and forks are skipped, whether the run lists the
 account's repositories or names them: each prints `skipped`, counts neither
 as matching nor as differing, and `--apply` changes nothing on it. A run
 in which every repository is skipped ends with `==> no repository
-checked; 1 skipped`, giving the number skipped, and exits 0. A named
-repository that a run without names does not list, such as one of another
-owner, is not one of the repositories that `repo-settings.sh` checks, even
-where the summary line of the run that names it calls it `checked`. A
-repository without commits gets the rulesets with the run after its first
-commit, since its default branch does not exist before.
+checked; 1 skipped`, giving the number skipped. A named repository that a
+run without names does not list, such as one of another owner, is not one
+of the repositories that `repo-settings.sh` checks, even where the summary
+line of the run that names it calls it `checked`. A repository without
+commits gets the rulesets with the run after its first commit, since its
+default branch does not exist before.
+
+What a run prints when it cannot set a repository is in the
+[README of `repo-settings/`](repo-settings/README.md).
 
 ## What the values set
+
+The values stand in `repo-settings/repo-settings.json`; the
+[README of `repo-settings/`](repo-settings/README.md) gives the rules to
+follow when changing it.
 
 | Key in `repo-settings.json` | Sets |
 |---|---|
@@ -139,26 +144,33 @@ signing key, a registration separate from the one for pushing. Run this once
 per Mac, after the git config is in place:
 
 ```bash
-~/vc/github-setup/register-signing-key.sh
+~/vc/github-setup/signing-key/register-signing-key.sh
 ```
 
 It needs the `admin:ssh_signing_key` scope, which a plain `gh auth login`
-does not grant. When the scope is missing, the script adds it with
-`gh auth refresh` and you confirm in the browser. Run without a terminal,
-it prints that command instead and stops. A key that is already registered
-is left alone:
+does not grant. When the scope is missing, the script adds it and you
+confirm in the browser. The key is registered under the Mac's computer
+name followed by `signing`:
+
+```
+    signing key registered on GitHub as "<computer name> signing"
+```
+
+A key that is already registered is left alone:
 
 ```
     signing key already registered on GitHub: /Users/andi/.ssh/id_ed25519.pub
 ```
 
+The lines the script prints when it stops without registering the key are
+in the [README of `signing-key/`](signing-key/README.md).
+
 ## Content and structure
 
-| File | Holds |
+| Path | Holds |
 |---|---|
-| `repo-settings.sh` | The check, and with `--apply` the change |
-| `repo-settings.json` | The values every repository gets: merge settings, secret scanning, the rulesets and the labels, as "What the values set" describes them |
-| `register-signing-key.sh` | The registration of the Mac's signing key on the account |
+| `repo-settings/` | The settings of the account's repositories: `repo-settings.sh`, the check, and with `--apply` the change; `repo-settings.json`, the values every repository gets, as "What the values set" describes them; and a [README](repo-settings/README.md) with the exit status of a run, the output of a run that fails and the rules the two files follow |
+| `signing-key/` | The account's signing key: `register-signing-key.sh`, the registration of the Mac's signing key on the account, and a [README](signing-key/README.md) with the output of a run that stops and how the key is found and compared |
 | `.editorconfig`, `.shellcheckrc` | Formatting (`shfmt` reads `.editorconfig`) and linting for the scripts |
 
 ## License
