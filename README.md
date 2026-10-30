@@ -18,7 +18,7 @@ Check the repositories of the account:
 
 ```bash
 git clone git@github.com:tiavelum/github-setup.git ~/vc/github-setup
-~/vc/github-setup/repo-settings.sh
+~/vc/github-setup/repo-settings/repo-settings.sh
 ```
 
 The repositories that `repo-settings.sh` checks are those that a run without
@@ -69,7 +69,7 @@ Run this after creating a repository, again after its first commit, and
 after changing `repo-settings.json`:
 
 ```bash
-~/vc/github-setup/repo-settings.sh --apply
+~/vc/github-setup/repo-settings/repo-settings.sh --apply
 ```
 
 It changes the settings of every repository that differs and prints `set`
@@ -77,7 +77,7 @@ for each. A label that is missing is created, and one that differs is
 updated. Name repositories to limit a run to them:
 
 ```bash
-~/vc/github-setup/repo-settings.sh --apply tiavelum/github-setup
+~/vc/github-setup/repo-settings/repo-settings.sh --apply tiavelum/github-setup
 ```
 
 Archived repositories and forks are skipped, whether the run lists the
@@ -139,7 +139,7 @@ signing key, a registration separate from the one for pushing. Run this once
 per Mac, after the git config is in place:
 
 ```bash
-~/vc/github-setup/register-signing-key.sh
+~/vc/github-setup/signing-key/register-signing-key.sh
 ```
 
 It needs the `admin:ssh_signing_key` scope, which a plain `gh auth login`
@@ -154,11 +154,11 @@ is left alone:
 
 ## Content and structure
 
-| File | Holds |
+| Path | Holds |
 |---|---|
-| `repo-settings.sh` | The check, and with `--apply` the change |
-| `repo-settings.json` | The values every repository gets: merge settings, secret scanning, the rulesets and the labels, as "What the values set" describes them |
-| `register-signing-key.sh` | The registration of the Mac's signing key on the account |
+| `repo-settings/repo-settings.sh` | The check, and with `--apply` the change |
+| `repo-settings/repo-settings.json` | The values every repository gets: merge settings, secret scanning, the rulesets and the labels, as "What the values set" describes them |
+| `signing-key/register-signing-key.sh` | The registration of the Mac's signing key on the account |
 | `.editorconfig`, `.shellcheckrc` | Formatting (`shfmt` reads `.editorconfig`) and linting for the scripts |
 
 ## License
