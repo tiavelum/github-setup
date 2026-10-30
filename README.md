@@ -57,11 +57,11 @@ skipped tiavelum/cli (fork)
 | `ruleset <name>: rule <rule> is not in repo-settings.json` | The ruleset has a rule the file does not list; `--apply` removes it. |
 | `label <name>: missing` | The repository lacks the label. |
 | `label <name>: <field> <now> -> <wanted>` | The label differs in `name`, `color` or `description`. |
-| `labels: could not be read` | `gh` could not read the labels of the repository, so a run without `--apply` prints `diff` for the repository and exits 1. With `--apply` the run prints the `!!` line below instead of `set`. |
-| `rulesets: could not be read` | `gh` could not read the rulesets of the repository, so a run without `--apply` prints `diff` for the repository and exits 1; the `gh` error is the line above this one. With `--apply` the run prints the `!!` line below instead of `set`. |
+| `labels: could not be read` | `gh` could not read the labels of the repository, so a run without `--apply` prints `diff` for the repository and exits 1; the `gh` error is the line above this one. With `--apply` the run prints `!! <repository>: setting the values failed` instead of `set`. |
+| `rulesets: could not be read` | `gh` could not read the rulesets of the repository, so a run without `--apply` prints `diff` for the repository and exits 1; the `gh` error is the line above this one. With `--apply` the run prints `!! <repository>: setting the values failed` instead of `set`. |
 | `!! <repository>: could not read its settings` | `gh` could not read the repository, for example without access; the run exits 1. |
 | `!! <repository>: setting the values failed` | With `--apply`: a value could not be set, or the repository still differs afterwards; the run exits 1. |
-| `==>` | The summary of the run. |
+| `==>` | The summary of the run. It counts a repository that `gh` could not read in the line `==> <number> repository/ies could not be checked`, though that repository is one of the repositories checked. |
 
 ## Set the values
 
