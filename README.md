@@ -21,9 +21,11 @@ git clone git@github.com:tiavelum/github-setup.git ~/vc/github-setup
 ~/vc/github-setup/repo-settings.sh
 ```
 
-The repositories that `repo-settings.sh` checks are those of the account
-`gh` is logged in to for which a run without `--apply` and without
-repository names prints `ok` or `diff`.
+The repositories that `repo-settings.sh` checks are those that a run without
+repository names lists from the account `gh` is logged in to, other than
+archived repositories and forks. A repository among them whose settings
+`gh` cannot read is still checked: the run prints no `ok` for it, so it
+fails TL-29 of tiavelum/engineering-standards.
 
 A repository whose settings match prints `ok`; one that differs prints
 `diff` and each field that differs, and the run exits 1. An archived
@@ -55,11 +57,11 @@ skipped tiavelum/cli (fork)
 | `ruleset <name>: rule <rule> is not in repo-settings.json` | The ruleset has a rule the file does not list; `--apply` removes it. |
 | `label <name>: missing` | The repository lacks the label. |
 | `label <name>: <field> <now> -> <wanted>` | The label differs in `name`, `color` or `description`. |
-| `labels: could not be read` | `gh` could not read the labels of the repository, so a run without `--apply` prints `diff` for the repository and exits 1. |
-| `rulesets: could not be read` | `gh` could not read the rulesets of the repository, so a run without `--apply` prints `diff` for the repository and exits 1; the `gh` error is the line above this one. With `--apply` the run prints the `!!` line below instead of `set`. |
+| `labels: could not be read` | `gh` could not read the labels of the repository, so a run without `--apply` prints `diff` for the repository and exits 1; the `gh` error is the line above this one. With `--apply` the run prints `!! <repository>: setting the values failed` instead of `set`. |
+| `rulesets: could not be read` | `gh` could not read the rulesets of the repository, so a run without `--apply` prints `diff` for the repository and exits 1; the `gh` error is the line above this one. With `--apply` the run prints `!! <repository>: setting the values failed` instead of `set`. |
 | `!! <repository>: could not read its settings` | `gh` could not read the repository, for example without access; the run exits 1. |
 | `!! <repository>: setting the values failed` | With `--apply`: a value could not be set, or the repository still differs afterwards; the run exits 1. |
-| `==>` | The summary of the run. |
+| `==>` | The summary of the run. It counts a repository that `gh` could not read in the line `==> <number> repository/ies could not be checked`, though that repository is one of the repositories checked. |
 
 ## Set the values
 
@@ -125,6 +127,8 @@ does not list are left alone and not reported.
   tags protected, a tag cannot be deleted. To do either, first set the
   ruleset's enforcement to disabled in the repository's settings; the check
   reports the ruleset until `--apply` restores it.
+- A run without repository names lists at most 1000 repositories of the
+  account; a repository beyond them is neither listed nor checked.
 
 ## Register the signing key
 
