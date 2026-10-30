@@ -14,12 +14,16 @@ Requires bash 3.2 or later, `jq` (tested with 1.7) and the GitHub CLI `gh`
 gh auth login
 ```
 
-Check every repository of the account:
+Check the repositories of the account:
 
 ```bash
 git clone git@github.com:tiavelum/github-setup.git ~/vc/github-setup
 ~/vc/github-setup/repo-settings.sh
 ```
+
+The repositories that `repo-settings.sh` checks are those for which this
+run, without `--apply` and without repository names, prints `ok` or
+`diff`; it lists the repositories of the account `gh` is logged in to.
 
 A repository whose settings match prints `ok`; one that differs prints
 `diff` and each field that differs, and the run exits 1. An archived
