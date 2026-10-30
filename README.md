@@ -23,9 +23,7 @@ git clone git@github.com:tiavelum/github-setup.git ~/vc/github-setup
 
 The repositories that `repo-settings.sh` checks are those that a run without
 repository names lists from the account `gh` is logged in to, other than
-archived repositories and forks. A repository among them whose settings
-`gh` cannot read is still checked: the run prints no `ok` for it, so it
-fails TL-29 of tiavelum/engineering-standards.
+archived repositories and forks.
 
 A repository whose settings match prints `ok`; one that differs prints
 `diff` and each field that differs, and the run exits 1. An archived
@@ -57,11 +55,11 @@ skipped tiavelum/cli (fork)
 | `ruleset <name>: rule <rule> is not in repo-settings.json` | The ruleset has a rule the file does not list; `--apply` removes it. |
 | `label <name>: missing` | The repository lacks the label. |
 | `label <name>: <field> <now> -> <wanted>` | The label differs in `name`, `color` or `description`. |
-| `labels: could not be read` | `gh` could not read the labels of the repository, so a run without `--apply` prints `diff` for the repository and exits 1; the `gh` error is the line above this one. With `--apply` the run prints `!! <repository>: setting the values failed` instead of `set`. |
-| `rulesets: could not be read` | `gh` could not read the rulesets of the repository, so a run without `--apply` prints `diff` for the repository and exits 1; the `gh` error is the line above this one. With `--apply` the run prints `!! <repository>: setting the values failed` instead of `set`. |
-| `!! <repository>: could not read its settings` | `gh` could not read the repository, for example without access; the run exits 1. |
-| `!! <repository>: setting the values failed` | With `--apply`: a value could not be set, or the repository still differs afterwards; the run exits 1. |
-| `==>` | The summary of the run. It counts a repository that `gh` could not read in the line `==> <number> repository/ies could not be checked`, though that repository is one of the repositories checked. |
+| `==>` | The summary of the run. When every repository checked matches, it reads `==> every repository checked has the settings of repo-settings.json`, and the run exits 0. |
+
+The lines a run prints when it cannot read or set a repository, or cannot
+start, are in the [README of `repo-settings/`](repo-settings/README.md),
+with the exit status of each case.
 
 ## Set the values
 
@@ -144,21 +142,28 @@ per Mac, after the git config is in place:
 
 It needs the `admin:ssh_signing_key` scope, which a plain `gh auth login`
 does not grant. When the scope is missing, the script adds it with
-`gh auth refresh` and you confirm in the browser. Run without a terminal,
-it prints that command instead and stops. A key that is already registered
-is left alone:
+`gh auth refresh` and you confirm in the browser. The key is registered
+under the Mac's computer name followed by `signing`:
+
+```
+    signing key registered on GitHub as "<computer name> signing"
+```
+
+A key that is already registered is left alone:
 
 ```
     signing key already registered on GitHub: /Users/andi/.ssh/id_ed25519.pub
 ```
 
+The lines the script prints when it stops without registering the key are
+in the [README of `signing-key/`](signing-key/README.md).
+
 ## Content and structure
 
 | Path | Holds |
 |---|---|
-| `repo-settings/repo-settings.sh` | The check, and with `--apply` the change |
-| `repo-settings/repo-settings.json` | The values every repository gets: merge settings, secret scanning, the rulesets and the labels, as "What the values set" describes them |
-| `signing-key/register-signing-key.sh` | The registration of the Mac's signing key on the account |
+| `repo-settings/` | The settings of the account's repositories: `repo-settings.sh`, the check, and with `--apply` the change; `repo-settings.json`, the values every repository gets, as "What the values set" describes them; and a [README](repo-settings/README.md) with the output of a run that fails and the rules the two files follow |
+| `signing-key/` | The account's signing key: `register-signing-key.sh`, the registration of the Mac's signing key on the account, and a [README](signing-key/README.md) with the output of a run that stops and how the key is found and compared |
 | `.editorconfig`, `.shellcheckrc` | Formatting (`shfmt` reads `.editorconfig`) and linting for the scripts |
 
 ## License
