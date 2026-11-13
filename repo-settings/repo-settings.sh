@@ -58,6 +58,16 @@ fi
 ruleset_count="$(jq 'length' <<<"$rulesets")"
 label_count="$(jq 'length' <<<"$labels")"
 
+# GitHub refuses a merge method's commit message format while that
+# method is off, so the format is compared and sent only once
+# repo-settings.json switches the method on.
+repository="$(jq -c '
+  (if .allow_merge_commit then . else with_entries(
+    select(.key | startswith("merge_commit_") | not)) end)
+  | if .allow_squash_merge then . else with_entries(
+    select(.key | startswith("squash_merge_commit_") | not)) end' \
+  <<<"$repository")"
+
 if [ "${#repos[@]}" -eq 0 ]; then
   owner="$(gh api user --jq .login)" || {
     echo "!! could not read the account" >&2
