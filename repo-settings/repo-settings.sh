@@ -58,14 +58,17 @@ fi
 ruleset_count="$(jq 'length' <<<"$rulesets")"
 label_count="$(jq 'length' <<<"$labels")"
 
-# GitHub refuses a merge method's commit message format while that
-# method is off, so the format is compared and sent only once
-# repo-settings.json switches the method on.
-repository="$(jq -c '
-  (if .allow_merge_commit then . else with_entries(
-    select(.key | startswith("merge_commit_") | not)) end)
-  | if .allow_squash_merge then . else with_entries(
-    select(.key | startswith("squash_merge_commit_") | not)) end' \
+# GitHub refuses a merge method's commit message format while that method
+# is off, yet keeps a format set while it was on. Each method is named by
+# its switch in repository and the prefix of its format keys.
+METHODS='def methods: [["allow_merge_commit", "merge_commit_"],
+  ["allow_squash_merge", "squash_merge_commit_"]];'
+
+# repository without the format keys of each method it switches off: the
+# request that sets the other values.
+repository_request="$(jq -c "$METHODS"'. as $want
+  | reduce (methods[] | select($want[.[0]] == false)) as $m
+      (.; with_entries(select(.key | startswith($m[1]) | not)))' \
   <<<"$repository")"
 
 if [ "${#repos[@]}" -eq 0 ]; then
@@ -87,6 +90,18 @@ merge_differences() {
   jq -r --argjson want "$repository" '. as $r | $want | to_entries[]
     | select($r[.key] != .value)
     | "\(.key) \($r[.key]) -> \(.value)"' <<<"$1"
+}
+
+# $1: the repository as GET repos/<owner>/<name> returns it. Prints, one
+# per line, a request for each method that repository switches off and
+# whose format differs: the method switched on, with its format.
+format_requests() {
+  jq -c --argjson want "$repository" "$METHODS"'. as $r
+    | methods[] | . as [$switch, $prefix]
+    | select($want[$switch] == false)
+    | ($want | with_entries(select(.key | startswith($prefix)))) as $format
+    | select($format | to_entries | any($r[.key] != .value))
+    | {($switch): true} + $format' <<<"$1"
 }
 
 # Secret scanning is compared on a public repository only: a repository
@@ -260,10 +275,18 @@ differences() {
 
 # $1: the repository; $2: its JSON.
 apply_settings() {
-  local repo_json="$2"
+  local repo_json="$2" request requests
   if [ -n "$(merge_differences "$repo_json")" ]; then
-    gh api -X PATCH "repos/$1" --input - <<<"$repository" >/dev/null ||
-      return 1
+    requests="$(format_requests "$repo_json")" || return 1
+    # The method stays on between the two requests; the check after
+    # --apply reports a repository where the second one failed.
+    while IFS= read -r request; do
+      [ -n "$request" ] || continue
+      gh api -X PATCH "repos/$1" --input - <<<"$request" >/dev/null ||
+        return 1
+    done <<<"$requests"
+    gh api -X PATCH "repos/$1" --input - <<<"$repository_request" \
+      >/dev/null || return 1
   fi
   if [ -n "$(security_differences "$repo_json")" ]; then
     jq -c '{security_and_analysis: .}' <<<"$security" |

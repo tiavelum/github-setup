@@ -100,7 +100,7 @@ follow when changing it.
 
 | Key in `repo-settings.json` | Sets |
 |---|---|
-| `repository` | Squash merging only, with the pull request's title and description as the commit, and merged branches deleted; merge commits stay switched off, and their format, the same title and description, is set once `allow_merge_commit` is set to `true` |
+| `repository` | Squash merging only, with the pull request's title and description as the commit, and merged branches deleted; merge commits are switched off but keep the same title and description as their default, so that switching them on, in `repo-settings.json` or in a repository's settings, needs no other change |
 | `security_and_analysis` | Secret scanning and push protection, on public repositories only: a repository of a personal account can enable them nowhere else |
 | `rulesets`, `default-branch` | The default branch changes only through a pull request, which needs no approval, and refuses force pushes |
 | `rulesets`, `tags` | A pushed tag can be neither moved nor deleted |
