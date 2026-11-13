@@ -71,7 +71,8 @@ no repository and exits 2:
   reads it from there wherever the run starts.
 - Each key of `repository` is compared with the field of the same name in
   the repository as `gh api repos/<owner>/<name>` returns it, and `--apply`
-  sends the whole object when one differs. A key that GitHub does not
+  sends the object when one differs, other than the format of a method that
+  the file switches off (next item). A key that GitHub does not
   return under that name shows as a difference on every run.
 - The keys starting with `merge_commit_` are the commit message format of
   merge commits, switched by `allow_merge_commit`; those starting with
@@ -84,7 +85,9 @@ no repository and exits 2:
   switched on, then sends the rest of `repository` without that format,
   which switches the method off again. The method is on in between; where
   the second request fails, the run prints `setting the values failed`
-  for the repository.
+  for the repository. A format listed without its switch is sent as it
+  stands, which GitHub refuses where the method is off, so each switch
+  stays in `repository` with its format.
 - Each key of `security_and_analysis` is compared by its `status`.
 - A ruleset is matched to one of the repository by its `name` and `target`;
   `--apply` sends the whole entry to create it or to replace the matched
