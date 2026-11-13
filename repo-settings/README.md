@@ -73,6 +73,12 @@ no repository and exits 2:
   the repository as `gh api repos/<owner>/<name>` returns it, and `--apply`
   sends the whole object when one differs. A key that GitHub does not
   return under that name shows as a difference on every run.
+- The keys starting with `merge_commit_` are compared and sent only while
+  `allow_merge_commit` is `true`, and those starting with
+  `squash_merge_commit_` only while `allow_squash_merge` is `true`: GitHub
+  refuses a merge method's commit message format with HTTP 422 while the
+  method is off. Switching a method on in `repo-settings.json` therefore
+  sets its format with the same run.
 - Each key of `security_and_analysis` is compared by its `status`.
 - A ruleset is matched to one of the repository by its `name` and `target`;
   `--apply` sends the whole entry to create it or to replace the matched
